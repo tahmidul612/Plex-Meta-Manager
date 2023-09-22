@@ -8,7 +8,7 @@ All overlay coordinates assume 1000 x 1500 for Posters and 1920 x 1080 for Backg
 
 **To remove all overlays add `remove_overlays: true` to the `overlay_path` [Libraries Attribute](../config/libraries.md#remove-overlays).**
 
-**IMPORTANT NOTE ON OVERLAYS:** Once you have applied overlays to your posters in PLex, it is highly recommennded that you never change artwork on a thing directly in Plex again.  PMM uses labels on the items in Plex to decide if an overlays has been applied, so if you change artwork behind PMM's back things can become confused and items can end up with double-overlaid posters.  It's recommended to set new artwork using the asset directory, which will ensure that this doesn't happen. 
+**IMPORTANT NOTE ON OVERLAYS:** Once you have applied overlays to your posters in Plex, it is highly recommended that you never change artwork on a thing directly in Plex again.  PMM uses labels on the items in Plex to decide if an overlay has been applied, so if you change artwork behind PMM's back things can become confused and items can end up with double-overlaid posters.  It's recommended to set new artwork using the asset directory, which will ensure that this doesn't happen. 
 
 **To change a single overlay original image either remove the `Overlay` shared label and update the Image in Plex or replace the image in the assets folder and then PMM will overlay the new image**
 
@@ -64,14 +64,13 @@ Each overlay definition needs to specify what overlay to use. This can happen in
     ```
    
 3. Using a dictionary for more overlay location options.
-
-```yaml
-overlays:
-  IMDb Top 250:
-    overlay:
-      name: IMDb Top 250
-    imdb_chart: top_movies
-```
+    ```yaml
+    overlays:
+      IMDb Top 250:
+        overlay:
+          name: IMDb Top 250
+        imdb_chart: top_movies
+    ```
 
 There are many attributes available when using overlays to edit how they work.
 
@@ -215,7 +214,7 @@ There are multiple Special Text Variables that can be used when formatting the t
 | `<<season_number>>`: Season Number (`1`)<br>`<<season_numberW>>`: Season Number As Words (`One`)<br>`<<season_numberWU>>`: Season Number As Uppercase Words (`ONE`)<br>`<<season_numberWL>>`: Season Number As Lowercase Words (`one`)<br>`<<season_number0>>`: Season Number With 10s Padding (`01`)<br>`<<season_number00>>`: Season Number With 100s Padding (`001`)                                                               | &#10060; | &#10060; | &#9989;  | &#9989;  |
 | `<<episode_number>>`: Episode Number (`1`)<br>`<<episode_numberW>>`: Episode Number As Words (`One`)<br>`<<episode_numberWU>>`: Episode Number As Uppercase Words (`One`)<br>`<<episode_numberWL>>`: Episode Number As Lowercase Words (`one`)<br>`<<episode_number0>>`: Episode Number With 10s Padding (`01`)<br>`<<episode_number00>>`: Episode Number With 100s Padding (`001`)                                                   | &#10060; | &#10060; | &#10060; | &#9989;  |
 | `<<versions>>`: Number of Versions of the Item (`1`)<br>`<<versionsW>>`: Number of Versions of the Item As Words (`One`)<br>`<<versionsWO>>`: Number of Versions of the Item As Uppercase Words (`ONE`)<br>`<<versionsWL>>`: Number of Versions of the Item As Words (`one`)<br>`<<versions0>>`: Number of Versions of the Item With 10s Padding (`01`)<br>`<<versions00>>`: Number of Versions of the Item With 100s Padding (`001`) | &#9989;  | &#10060; | &#10060; | &#9989;  |
-| `<<runtime>>`: Complete Runtime of the Item in minutes (`150`)<br>`<<runtimeH>>`: Hours in runtime of the Item (`2`)<br>`<<runtimeM>>`: Minutes remaining in the hour in the runtime of the Item (`30`)                                                                                                                                                                                                                               | &#9989;  | &#10060; | &#10060; | &#9989;  |
+| `<<runtime>>`: Complete Runtime of the Item in minutes (`150`)<br>`<<runtimeH>>`: Hours in runtime of the Item (`2`)<br>`<<runtimeM>>`: Minutes remaining in the hour in the runtime of the Item (`30`)<br>**Show and Season use average Episode Runtime.**                                                                                                                                                                           | &#9989;  | &#9989;  | &#9989;  | &#9989;  |
 | `<<bitrate>>`: Bitrate of the first media file for an item.<br>`<<bitrateH>>`: Bitrate of the media file with the highest bitrate<br>`<<bitrateL>>`: Bitrate of the media file with the lowest bitrate                                                                                                                                                                                                                                | &#9989;  | &#10060; | &#10060; | &#9989;  |
 | `<<originally_available>>`: Original Available Date of the Item<br>`<<originally_available[FORMAT]>>`: Original Available Date of the Item in the given format. [Format Options](https://strftime.org/)                                                                                                                                                                                                                               | &#9989;  | &#9989;  | &#10060; | &#9989;  |
 

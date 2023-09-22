@@ -17,9 +17,13 @@ external_templates:
       pmm:
         conditions:
           - file.exists: false
+            file_<<key>>.exists: false
             url.exists: false
+            url_<<key>>.exists: false
             git.exists: false
+            git_<<key>>.exists: false
             repo.exists: false
+            repo_<<key>>.exists: false
             value: logo/<<style>>/<<key>>
     queue: position
     back_color: "#00000099"
@@ -79,8 +83,8 @@ overlays:
     variables: {key: disney, weight: 50}
     template: [name: standard, name: flixpatrol]
 
-  HBO:
-    variables: {key: hbo, weight: 40}
+  Max:
+    variables: {key: max, weight: 40, slug: hbo}
     template: [name: standard, name: flixpatrol]
 
   Hulu:

@@ -5,7 +5,7 @@ from modules.builder import CollectionBuilder
 from modules.util import Failed, FilterFailed, NonExisting, NotScheduled
 from num2words import num2words
 from plexapi.exceptions import BadRequest
-from plexapi.video import Movie, Show, Season, Episode
+from plexapi.video import Season, Episode
 from PIL import Image, ImageFilter
 
 logger = util.logger
@@ -122,17 +122,17 @@ class Overlays:
                                     actual = plex.attribute_translation[cache_key] if cache_key in plex.attribute_translation else cache_key
                                     if not hasattr(item, actual):
                                         continue
-                                    actual_value = getattr(item, actual)
-                                    if cache_value is None or actual_value is None:
+                                    real_value = getattr(item, actual)
+                                    if cache_value is None or real_value is None:
                                         continue
                                     if cache_key in overlay.float_vars:
                                         cache_value = float(cache_value)
                                     if cache_key in overlay.int_vars:
                                         cache_value = int(cache_value)
                                     if cache_key in overlay.date_vars:
-                                        actual_value = actual_value.strftime("%Y-%m-%d")
-                                    if actual_value != cache_value:
-                                        overlay_change = f"Special Text Changed from {cache_value} to {actual_value}"
+                                        real_value = real_value.strftime("%Y-%m-%d")
+                                    if real_value != cache_value:
+                                        overlay_change = f"Special Text Changed from {cache_value} to {real_value}"
                     try:
                         poster, background, item_dir, name = self.library.find_item_assets(item)
                         if not poster and self.library.assets_for_all:
@@ -151,6 +151,7 @@ class Overlays:
 
                     has_original = None
                     new_backup = None
+                    changed_image = False
                     if poster:
                         if image_compare and str(poster.compare) != str(image_compare):
                             changed_image = True
@@ -185,7 +186,7 @@ class Overlays:
                     poster_compare = None
                     if poster is None and has_original is None:
                         logger.error(f"  Overlay Error: No poster found")
-                    elif self.library.reapply_overlays or new_backup or overlay_change:
+                    elif self.library.reapply_overlays or new_backup or overlay_change or changed_image:
                         try:
                             if not self.library.reapply_overlays and new_backup:
                                 logger.trace("  Overlay Reason: New image detected")
@@ -234,6 +235,13 @@ class Overlays:
                                                     actual_value = current
                                                 elif mod == "L" and current < actual_value:
                                                     actual_value = current
+                                        elif format_var == "runtime" and text_overlay.level in ["show", "season", "artist", "album"]:
+                                            if hasattr(item, "duration") and item.duration:
+                                                actual_value = item.duration
+                                            else:
+                                                sub_items = item.episodes() if text_overlay.level in ["show", "season"] else item.tracks()
+                                                sub_items = [ep.duration for ep in sub_items if hasattr(ep, "duration") and ep.duration]
+                                                actual_value = sum(sub_items) / len(sub_items)
                                         else:
                                             if not hasattr(item, actual_attr) or getattr(item, actual_attr) is None:
                                                 raise Failed(f"Overlay Warning: No {full_text} found")
@@ -261,6 +269,8 @@ class Overlays:
                                             final_value = int(actual_value * 10)
                                         elif mod == "#":
                                             final_value = str(actual_value)[:-2] if str(actual_value).endswith(".0") else actual_value
+                                        elif mod == "/":
+                                            final_value = f"{float(actual_value) / 2:.1f}"
                                         elif mod == "W":
                                             final_value = num2words(int(actual_value))
                                         elif mod == "WU":
@@ -271,8 +281,6 @@ class Overlays:
                                             final_value = f"{int(actual_value):02}"
                                         elif mod == "00":
                                             final_value = f"{int(actual_value):03}"
-                                        elif mod == "/":
-                                            final_value = f"{float(actual_value) / 2:.1f}"
                                         elif mod == "U":
                                             final_value = str(actual_value).upper()
                                         elif mod == "L":
@@ -398,7 +406,7 @@ class Overlays:
                         logger.info("")
                         try:
                             builder.filter_and_save_items(builder.gather_ids(method, value))
-                        except NonExisting as e:
+                        except Failed as e:
                             if builder.ignore_blank_results:
                                 logger.warning("")
                                 logger.warning(e)
@@ -408,6 +416,8 @@ class Overlays:
                     added_titles = []
                     if builder.found_items:
                         for item in builder.found_items:
+                            if builder.limit and len(added_titles) >= builder.limit:
+                                break
                             key_to_item[item.ratingKey] = item
                             added_titles.append(item)
                             if item.ratingKey not in properties[prop_name].keys:

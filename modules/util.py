@@ -14,7 +14,7 @@ except ModuleNotFoundError:
     windows = False
 
 
-logger: MyLogger = None
+logger: MyLogger = None # noqa
 
 class TimeoutExpired(Exception):
     pass
@@ -291,7 +291,7 @@ def logger_input(prompt, timeout=60):
     else:                                   raise SystemError("Input Timeout not supported on this system")
 
 def header(language="en-US,en;q=0.5"):
-    return {"Accept-Language": "eng" if language == "default" else language, "User-Agent": "Mozilla/5.0 Firefox/102.0"}
+    return {"Accept-Language": "eng" if language == "default" else language, "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0"}
 
 def alarm_handler(signum, frame):
     raise TimeoutExpired
@@ -308,7 +308,7 @@ def windows_input(prompt, timeout=5):
     sys.stdout.write(f"| {prompt}: ")
     sys.stdout.flush()
     result = []
-    start_time = time.time()
+    s_time = time.time()
     while True:
         if msvcrt.kbhit():
             char = msvcrt.getwche()
@@ -319,7 +319,7 @@ def windows_input(prompt, timeout=5):
                 return out
             elif ord(char) >= 32: #space_char
                 result.append(char)
-        if (time.time() - start_time) > timeout:
+        if (time.time() - s_time) > timeout:
             print("")
             raise TimeoutExpired
 
@@ -409,6 +409,7 @@ def time_window(tw):
 
 def load_files(files_to_load, method, err_type="Config", schedule=None, lib_vars=None, single=False):
     files = []
+    had_scheduled = False
     if not lib_vars:
         lib_vars = {}
     files_to_load = get_list(files_to_load, split=False)
@@ -471,6 +472,7 @@ def load_files(files_to_load, method, err_type="Config", schedule=None, lib_vars
                     if not ignore_schedules:
                         err = e
                 if err:
+                    had_scheduled = True
                     logger.info(f"Metadata Schedule:{err}\n")
                     for file_type, file_path, temp_vars, asset_directory in current:
                         logger.warning(f"{file_type}: {file_path} not scheduled to run")
@@ -482,7 +484,7 @@ def load_files(files_to_load, method, err_type="Config", schedule=None, lib_vars
                 files.append(("File", file, {}, None))
             else:
                 logger.error(f"{err_type} Error: Path not found: {file}")
-    return files
+    return files, had_scheduled
 
 def check_num(num, is_int=True):
     try:
@@ -601,22 +603,47 @@ def schedule_check(attribute, data, current_time, run_hour, is_all=False):
                 continue
             param = match.group(1)
             if run_time.startswith("hour"):
-                try:
-                    if 0 <= int(param) <= 23:
-                        schedule_str += f"\nScheduled to run on the {num2words(param, to='ordinal_num')} hour"
-                        if run_hour == int(param):
-                            all_check += 1
-                    else:
-                        raise ValueError
-                except ValueError:
-                    logger.error(f"Schedule Error: hourly {display} must be an integer between 0 and 23")
+                if "-" in run_time:
+                    start, end = param.split("-")
+                    try:
+                        start = int(start)
+                        end = int(end)
+                        if start != end and 0 <= start <= 23 and 0 <= end <= 23:
+                            schedule_str += f"\nScheduled to run between the {num2words(start, to='ordinal_num')} hour and the {num2words(end, to='ordinal_num')} hour"
+                            if end > start and start <= run_hour <= end:
+                                all_check += 1
+                            elif start > end and (start <= run_hour or run_hour <= end):
+                                all_check += 1
+                        else:
+                            raise ValueError
+                    except ValueError:
+                        logger.error(f"Schedule Error: hourly {start}-{end} each must be a different integer between 0 and 23")
+                else:
+                    try:
+                        if 0 <= int(param) <= 23:
+                            schedule_str += f"\nScheduled to run on the {num2words(param, to='ordinal_num')} hour"
+                            if run_hour == int(param):
+                                all_check += 1
+                        else:
+                            raise ValueError
+                    except ValueError:
+                        logger.error(f"Schedule Error: hourly {display} must be an integer between 0 and 23")
             elif run_time.startswith("week"):
-                if param.lower() not in days_alias:
-                    logger.error(f"Schedule Error: weekly {display} must be a day of the week i.e. weekly(Monday)")
+                ok_days = param.lower().split("|")
+                err = None
+                for ok_day in ok_days:
+                    if ok_day not in days_alias:
+                        err = f"Schedule Error: weekly {display} must be a day of the week i.e. weekly(Monday)"
+                if err:
+                    logger.error(err)
                     continue
-                weekday = days_alias[param.lower()]
-                schedule_str += f"\nScheduled weekly on {pretty_days[weekday]}"
-                if weekday == current_time.weekday():
+                pass_day = False
+                for ok_day in ok_days:
+                    weekday = days_alias[ok_day]
+                    schedule_str += f"\nScheduled weekly on {pretty_days[weekday]}"
+                    if weekday == current_time.weekday():
+                        pass_day = True
+                if pass_day:
                     all_check += 1
             elif run_time.startswith("month"):
                 try:
@@ -642,19 +669,26 @@ def schedule_check(attribute, data, current_time, run_hour, is_all=False):
                 except ValueError:
                     logger.error(f"Schedule Error: yearly {display} must be in the MM/DD format i.e. yearly(11/22)")
             elif run_time.startswith("range"):
-                match = re.match("^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])-(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$", param)
-                if not match:
-                    logger.error(f"Schedule Error: range {display} must be in the MM/DD-MM/DD format i.e. range(12/01-12/25)")
-                    continue
-                month_start, day_start = check_day(int(match.group(1)), int(match.group(2)))
-                month_end, day_end = check_day(int(match.group(3)), int(match.group(4)))
-                month_check, day_check = check_day(current_time.month, current_time.day)
-                check = datetime.strptime(f"{month_check}/{day_check}", "%m/%d")
-                start = datetime.strptime(f"{month_start}/{day_start}", "%m/%d")
-                end = datetime.strptime(f"{month_end}/{day_end}", "%m/%d")
-                range_collection = True
-                schedule_str += f"\nScheduled between {pretty_months[month_start]} {num2words(day_start, to='ordinal_num')} and {pretty_months[month_end]} {num2words(day_end, to='ordinal_num')}"
-                if start <= check <= end if start < end else (check <= end or check >= start):
+                ranges = []
+                range_pass = False
+                for ok_range in param.lower().split("|"):
+                    match = re.match("^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])-(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$", ok_range)
+                    if not match:
+                        logger.error(f"Schedule Error: range {display} must be in the MM/DD-MM/DD format i.e. range(12/01-12/25)")
+                        continue
+                    month_start, day_start = check_day(int(match.group(1)), int(match.group(2)))
+                    month_end, day_end = check_day(int(match.group(3)), int(match.group(4)))
+                    month_check, day_check = check_day(current_time.month, current_time.day)
+                    check = datetime.strptime(f"{month_check}/{day_check}", "%m/%d")
+                    start = datetime.strptime(f"{month_start}/{day_start}", "%m/%d")
+                    end = datetime.strptime(f"{month_end}/{day_end}", "%m/%d")
+                    range_collection = True
+                    ranges.append(f"{pretty_months[month_start]} {num2words(day_start, to='ordinal_num')} and {pretty_months[month_end]} {num2words(day_end, to='ordinal_num')}")
+                    if start <= check <= end if start < end else (check <= end or check >= start):
+                        range_pass = True
+                if ranges:
+                    schedule_str += f"\nScheduled {' or '.join(ranges)}"
+                if range_pass:
                     all_check += 1
         else:
             logger.error(f"Schedule Error: {display}")
@@ -975,5 +1009,3 @@ class YAML:
         if self.path:
             with open(self.path, 'w', encoding="utf-8") as fp:
                 self.yaml.dump(self.data, fp)
-
-

@@ -4,6 +4,7 @@ The `playlist` Default Metadata File is used to create playlists based on popula
 
 This Default file requires [Trakt Authentication](../config/trakt)
 
+This file assumes that you have libraries named `Movies` and `TV Shows`. If you do not have these libraries or want to use alternative/additional libraries, use the `libraries` template variable which is outlined in the [Template Variables](#template-variables) table.
 ![](images/playlist.png)
 
 ## Playlists
@@ -93,7 +94,7 @@ The below Trakt lists are used to populate the playlists associated with the key
 trakt_list:
   arrow: https://trakt.tv/users/donxy/lists/arrowverse
   dcau: https://trakt.tv/users/donxy/lists/dc-animated-series-universe
-  dragonball: https://trakt.tv/users/qamazi/lists/dragon-ball-binged-out
+  dragonball: https://trakt.tv/users/grawler/lists/dragon-ball-in-order
   mcu: https://trakt.tv/users/donxy/lists/marvel-cinematic-universe
   pokemon: https://trakt.tv/users/munch54/lists/pokemon-watching-order
   startrek: https://trakt.tv/users/goodevilgenius/lists/star-trek-chronology

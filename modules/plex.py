@@ -432,22 +432,48 @@ class Plex(Library):
     def __init__(self, config, params):
         super().__init__(config, params)
         self.plex = params["plex"]
-        self.url = params["plex"]["url"]
-        self.token = params["plex"]["token"]
-        self.timeout = params["plex"]["timeout"]
+        self.url = self.plex["url"]
+        self.token = self.plex["token"]
+        self.timeout = self.plex["timeout"]
         logger.secret(self.url)
         logger.secret(self.token)
         try:
             self.PlexServer = PlexServer(baseurl=self.url, token=self.token, session=self.config.session, timeout=self.timeout)
             plexapi.server.TIMEOUT = self.timeout
             os.environ["PLEXAPI_PLEXAPI_TIMEOUT"] = str(self.timeout)
+            logger.info(f"Connected to server {self.PlexServer.friendlyName} version {self.PlexServer.version}")
+            logger.info(f"Running on {self.PlexServer.platform} version {self.PlexServer.platformVersion}")
+            pp_str = f"PlexPass: {self.PlexServer.myPlexSubscription}"
+            srv_settings = self.PlexServer.settings
+            try:
+                db_cache = srv_settings.get("DatabaseCacheSize")
+                logger.info(f"Plex DB cache setting: {db_cache.value} MB")
+                if self.plex["db_cache"] and self.plex["db_cache"] != db_cache.value:
+                    db_cache.set(self.plex["db_cache"])
+                    self.PlexServer.settings.save()
+                    logger.info(f"Plex DB Cache updated to {self.plex['db_cache']} MB")
+            except NotFound:
+                logger.info(f"Plex DB cache setting: Unknown")
+            uc_str = f"Unknown update channel."
+            if srv_settings.get("butlerUpdateChannel").value == '16':
+                uc_str = f"Public update channel."
+            elif srv_settings.get("butlerUpdateChannel").value == '8':
+                uc_str = f"PlexPass update channel."
+            logger.info(f"{pp_str} on {uc_str}")
+            logger.info(f"Scheduled maintenance running between {srv_settings.get('butlerStartHour').value}:00 and {srv_settings.get('butlerEndHour').value}:00")
         except Unauthorized:
+            logger.info(f"Plex Error: Plex connection attempt returned 'Unauthorized'")
             raise Failed("Plex Error: Plex token is invalid")
+        except requests.exceptions.ConnectTimeout:
+            raise Failed(f"Plex Error: Plex did not respond within the {self.timeout}-second timeout.")
         except ValueError as e:
+            logger.info(f"Plex Error: Plex connection attempt returned 'ValueError'")
+            logger.stacktrace()
             raise Failed(f"Plex Error: {e}")
         except (requests.exceptions.ConnectionError, ParseError):
+            logger.info(f"Plex Error: Plex connection attempt returned 'ConnectionError' or 'ParseError'")
             logger.stacktrace()
-            raise Failed("Plex Error: Plex url is invalid")
+            raise Failed("Plex Error: Plex URL is probably invalid")
         self.Plex = None
         library_names = []
         for s in self.PlexServer.library.sections():
@@ -468,6 +494,9 @@ class Plex(Library):
         self._all_items = []
         self._account = None
         self.agent = self.Plex.agent
+        self.scanner = self.Plex.scanner
+        source_setting = next((s for s in self.Plex.settings() if s.id in ["ratingsSource"]), None)
+        self.ratings_source = source_setting.enumValues[source_setting.value] if source_setting else "N/A"
         self.is_movie = self.type == "Movie"
         self.is_show = self.type == "Show"
         self.is_music = self.type == "Artist"
@@ -477,6 +506,11 @@ class Plex(Library):
         if not self.is_music and self.update_blank_track_titles:
             self.update_blank_track_titles = False
             logger.error(f"update_blank_track_titles library operation only works with music libraries")
+        logger.info(f"Connected to library {params['name']}")
+        logger.info(f"Type: {self.type}")
+        logger.info(f"Agent: {self.agent}")
+        logger.info(f"Scanner: {self.scanner}")
+        logger.info(f"Ratings Source: {self.ratings_source}")
 
     def notify(self, text, collection=None, critical=True):
         self.config.notify(text, server=self.PlexServer.friendlyName, library=self.name, collection=collection, critical=critical)
@@ -496,7 +530,7 @@ class Plex(Library):
                 args = f"{args}&label={label_id}"
             else:
                 return []
-        return self.get_filter_items(args)
+        return self.fetchItems(args)
 
     @retry(stop_max_attempt_number=6, wait_fixed=10000, retry_on_exception=util.retry_if_not_plex)
     def search(self, title=None, sort=None, maxresults=None, libtype=None, **kwargs):
@@ -527,6 +561,10 @@ class Plex(Library):
     def fetchItem(self, data):
         return self.PlexServer.fetchItem(data)
 
+    @retry(stop_max_attempt_number=6, wait_fixed=10000, retry_on_exception=util.retry_if_not_plex)
+    def fetchItems(self, uri_args):
+        return self.Plex.fetchItems(f"/library/sections/{self.Plex.key}/all{uri_args}")
+
     def get_all(self, builder_level=None, load=False):
         if load and builder_level in [None, "show", "artist", "movie"]:
             self._all_items = []
@@ -540,11 +578,22 @@ class Plex(Library):
         container_start = 0
         container_size = plexapi.X_PLEX_CONTAINER_SIZE
         results = []
-        while self.Plex._totalViewSize is None or container_start <= self.Plex._totalViewSize:
-            results.extend(self.fetchItems(key, container_start, container_size))
-            logger.ghost(f"Loaded: {container_start}/{self.Plex._totalViewSize}")
+        total_size = 1
+        while total_size > len(results) and container_start <= total_size:
+            data = self.Plex._server.query(key, headers={"X-Plex-Container-Start": str(container_start), "X-Plex-Container-Size": str(container_size)})
+            subresults = self.Plex.findItems(data, initpath=key)
+            total_size = utils.cast(int, data.attrib.get('totalSize') or data.attrib.get('size')) or len(subresults)
+
+            librarySectionID = utils.cast(int, data.attrib.get('librarySectionID'))
+            if librarySectionID:
+                for item in subresults:
+                    item.librarySectionID = librarySectionID
+
+            results.extend(subresults)
             container_start += container_size
-        logger.info(f"Loaded {self.Plex._totalViewSize} {builder_level.capitalize()}s")
+            logger.ghost(f"Loaded: {total_size if container_start > total_size else container_start}/{total_size}")
+
+        logger.info(f"Loaded {total_size} {builder_level.capitalize()}s")
         if builder_level in [None, "show", "artist", "movie"]:
             self._all_items = results
         return results
@@ -559,10 +608,6 @@ class Plex(Library):
     @retry(stop_max_attempt_number=6, wait_fixed=10000, retry_on_exception=util.retry_if_not_plex)
     def create_playlist(self, name, items):
         return self.PlexServer.createPlaylist(name, items=items)
-
-    @retry(stop_max_attempt_number=6, wait_fixed=10000, retry_on_exception=util.retry_if_not_plex)
-    def fetchItems(self, key, container_start, container_size):
-        return self.Plex.fetchItems(key, container_start=container_start, container_size=container_size)
 
     @retry(stop_max_attempt_number=6, wait_fixed=10000, retry_on_exception=util.retry_if_not_plex)
     def moveItem(self, obj, item, after):
@@ -764,9 +809,9 @@ class Plex(Library):
             try:
                 tag = next(f for f in self.Plex.listFilters(libtype) if f.filter == tag)
             except StopIteration:
-                availableFilters = [f.filter for f in self.Plex.listFilters(libtype)]
+                available_filters = [f.filter for f in self.Plex.listFilters(libtype)]
                 raise NotFound(f'Unknown filter field "{tag}" for libtype "{libtype}". '
-                               f'Available filters: {availableFilters}') from None
+                               f'Available filters: {available_filters}') from None
         items = self.Plex.findItems(self.Plex._server.query(tag.key), FilterChoice)
         if tag.key.endswith("/collection?type=4"):
             keys = [k.key for k in items]
@@ -858,7 +903,7 @@ class Plex(Library):
 
     def test_smart_filter(self, uri_args):
         logger.debug(f"Smart Collection Test: {uri_args}")
-        test_items = self.get_filter_items(uri_args)
+        test_items = self.fetchItems(uri_args)
         if len(test_items) < 1:
             raise Failed(f"Plex Error: No items for smart filter: {uri_args}")
 
@@ -1028,7 +1073,7 @@ class Plex(Library):
         elif method == "plex_search":
             logger.info(f"Processing {data[1]}")
             logger.trace(data[2])
-            items = self.get_filter_items(data[2])
+            items = self.fetchItems(data[2])
         elif method == "plex_collectionless":
             good_collections = []
             logger.info(f"Processing Plex Collectionless")
@@ -1058,6 +1103,7 @@ class Plex(Library):
             for i, item in enumerate(all_items, 1):
                 logger.ghost(f"Processing: {i}/{len(all_items)} {item.title}")
                 add_item = True
+                item = self.reload(item)
                 for collection in item.collections:
                     if str(collection.tag).lower() in collection_indexes:
                         add_item = False
@@ -1076,15 +1122,11 @@ class Plex(Library):
             return self.search(label=collection.title if isinstance(collection, Collection) else str(collection))
         elif isinstance(collection, (Collection, Playlist)):
             if collection.smart:
-                return self.get_filter_items(self.smart_filter(collection))
+                return self.fetchItems(self.smart_filter(collection))
             else:
                 return self.query(collection.items)
         else:
             return []
-
-    def get_filter_items(self, uri_args):
-        key = f"/library/sections/{self.Plex.key}/all{uri_args}"
-        return self.Plex._search(key, None, 0, plexapi.X_PLEX_CONTAINER_SIZE)
 
     def get_collection_name_and_items(self, collection, smart_label_collection):
         name = collection.title if isinstance(collection, (Collection, Playlist)) else str(collection)
@@ -1149,7 +1191,7 @@ class Plex(Library):
 
     def image_update(self, item, image, tmdb=None, title=None, poster=True):
         text = f"{f'{title} ' if title else ''}{'Poster' if poster else 'Background'}"
-        attr = self.mass_poster_update if poster else self.mass_background_update
+        attr = self.mass_poster_update["source"] if poster else self.mass_background_update["source"]
         if attr == "lock":
             self.query(item.lockPoster if poster else item.lockArt)
             logger.info(f"{text} | Locked")
@@ -1376,7 +1418,7 @@ class Plex(Library):
 
         if is_top_level and self.asset_folders and self.dimensional_asset_rename and (not poster or not background):
             for file in util.glob_filter(os.path.join(item_asset_directory, "*.*")):
-                if file.lower().endswith((".png", ".jpg", ".jpeg", "webp")) and not re.match(r"s\d+e\d+|season\d+", file.lower()):
+                if file.lower().endswith((".png", ".jpg", ".jpeg", "webp")) and not re.match(r"s\d+e\d+|season\d+", os.path.basename(file).lower()):
                     try:
                         with Image.open(file) as image:
                             _w, _h = image.size
@@ -1567,6 +1609,10 @@ class Plex(Library):
                 for media in item.media:
                     for part in media.parts:
                         values.extend([a.extendedDisplayTitle for a in part.audioStreams() if a.extendedDisplayTitle])
+            elif filter_attr == "subtitle_track_title":
+                for media in item.media:
+                    for part in media.parts:
+                        values.extend([a.extendedDisplayTitle for a in part.subtitleStreams() if a.extendedDisplayTitle])
             elif filter_attr in ["audio_codec", "audio_profile", "video_codec", "video_profile"]:
                 for media in item.media:
                     attr = getattr(media, filter_actual)

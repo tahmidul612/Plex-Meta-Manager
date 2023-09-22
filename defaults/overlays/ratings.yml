@@ -8,6 +8,7 @@
 templates:
   Rating:
     default:
+      builder_level: <<overlay_level>>
       rating<<rating_num>>_file: <<file>>
       rating<<rating_num>>_url: <<url>>
       rating<<rating_num>>_git: <<git>>
@@ -91,6 +92,9 @@ templates:
             rating<<rating_num>>_image: [anidb, letterboxd, rt_popcorn, mdb, tmdb, trakt, mal, star]
             value: false
           - image_level: Top
+            builder_level: episode
+            value: false
+          - image_level: Top
             overlay_level: episode
             value: false
           - rating<<rating_num>>: none
@@ -98,10 +102,15 @@ templates:
       rating<<rating_num>>_style:
         default: ""
         conditions:
+          - rating<<rating_num>>_image: [rt_popcorn, rt_tomato, tmdb, metacritic, mdb]
+            value: "%"
+          - rating<<rating_num>>_image: [letterboxd]
+            value: "/"
+      rating<<rating_num>>_extra:
+        default: ""
+        conditions:
           - rating<<rating_num>>_image: [rt_popcorn, rt_tomato, tmdb]
             value: "%"
-          - rating<<rating_num>>_image: [metacritic, mdb]
-            value: "0"
       image_extra:
         default: ""
         conditions:
@@ -441,11 +450,11 @@ templates:
         <<rating<<rating_num>>>>_rating.<<lsuffix>>: <<lte>>
     mdblist_list: <<mdblist_top>>
     imdb_chart: <<imdb_top>>
-    overlay_level: <<overlay_level>>
+    builder_level: <<builder_level>>
     run_definition: <<run_this>>
     ignore_blank_results: true
     overlay:
-      name: text(<<rating<<rating_num>>>>_rating<<rating<<rating_num>>_style>>)
+      name: text(<<<<rating<<rating_num>>>>_rating<<rating<<rating_num>>_style>>>><<rating<<rating_num>>_extra>>)
       file: <<rating<<rating_num>>_file>>
       url: <<rating<<rating_num>>_url>>
       git: <<rating<<rating_num>>_git>>

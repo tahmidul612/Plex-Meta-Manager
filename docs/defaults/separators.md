@@ -8,6 +8,10 @@ Below is an example of a separator, which can be seen surrounded by a red square
 
 ![](images/separators.jpg)
 
+## Important Note:
+
+Plex does not support creating these empty collections natively through its UI, so they can behave strangely in some cases, primarily related to showing/hiding them in the main library view.  As a workaround, you can use a `placeholder_` [template variable](#shared-separator-variables) to specify a single movie/show to add to these collections so they have one thing in them and will then behave as expected.  For example, `placeholder_imdb_id: tt0068646` will place The Godfather inside the separator in a movie library.
+
 ## Separator Files
 
 These are all the files that contain a separator 
@@ -35,7 +39,7 @@ These are all the files that contain a separator
 | Writers Collections           | `writer`            |
 | Based On... Collections       | `based`             |
 
-## Shared Separator Variables 
+## Shared Separator Variables
 
 Template Variables can be used to manipulate the file in various ways to slightly change how it works without having to make your own local copy.
 
@@ -46,10 +50,12 @@ Note that the `template_variables:` section only needs to be used if you do want
 | Variable                 | Description & Values                                                                                                                                                                                                                                                                                                                                                                  |
 |:-------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `use_separator`          | **Description:** Turn the [Separator Collection](#use-separators) off.<br>**Values:** `false` to turn of the collection                                                                                                                                                                                                                                                               |
-| `sep_style`              | **Description:** Choose the [Separator Style](#separator-styles).<br>**Default:** `orig`<br>**Values:** `orig`, `red`, `blue`, `green`, `gray`, `purple`, or `stb`                                                                                                                                                                                                                    |         
-| `placeholder_tmdb_movie` | **Description:** Add a placeholder Movie to the Separator.<br>**Values:** TMDb Movie ID                                                                                                                                                                                                                                                                                               |
-| `placeholder_tvdb_show`  | **Description:** Add a placeholder Show to the Separator.<br>**Values:** TVDb Show ID                                                                                                                                                                                                                                                                                                 |
-| `placeholder_imdb_id`    | **Description:** Add a placeholder Movie/Show to the Separator.<br>**Values:** IMDb ID                                                                                                                                                                                                                                                                                                |
+| `sep_style`              | **Description:** Choose the [Separator Style](#separator-styles).<br>**Default:** `orig`<br>**Values:** `amethyst`, `aqua`, `blue`, `forest`, `fuchsia`, `gold`, `gray`, `green`, `navy`, `ocean`, `olive`, `orchid`, `orig`, `pink`, `plum`, `purple`, `red`, `rust`, `salmon`, `sand`, `stb`, or `tan`                                                                           |         
+| `sort_prefix`            | **Description:** Changes the prefix of the sort title.<br>**Default:** `!`<br>**Values:** Any String                                                                                                                                                                                                                                                                                  |
+| `sort_title`             | **Description:** Changes the sort title of all collections.<br>**Default:** `<<sort_prefix>><<collection_section>>_!<<title>>`<br>**Values:** Any String                                                                                                                                                                                                                              |
+| `placeholder_tmdb_movie` | **Description:** Add a placeholder Movie to the Separator.  Only valid for Movie libraries.<br>**Values:** TMDb Movie ID                                                                                                                                                                                                                                                              |
+| `placeholder_tvdb_show`  | **Description:** Add a placeholder Show to the Separator.  Only valid for Show libraries.<br>**Values:** TVDb Show ID                                                                                                                                                                                                                                                                 |
+| `placeholder_imdb_id`    | **Description:** Add a placeholder Movie/Show to the Separator.  Valid for Movie or Show libraries assuming the ID points to an item of the correct type.<br>**Values:** IMDb ID                                                                                                                                                                                                      |
 | `name_separator`         | **Description:** Changes the name of the specified key's collection.<br>**Values:** New Collection Name                                                                                                                                                                                                                                                                               |
 | `summary_separator`      | **Description:** Changes the summary of the specified key's collection.<br>**Values:** New Collection Summary                                                                                                                                                                                                                                                                         |
 | `collection_section`     | **Description:** Changes the sort order of the collection sections against other default collection sections.<br>**Values:** Any number                                                                                                                                                                                                                                               |
@@ -60,7 +66,7 @@ Note that the `template_variables:` section only needs to be used if you do want
 
 Separators are enabled by default, but can be disabled/enabled per-file and per-library.
 
-An example of disabling separators at the library-level cam be seen here
+An example of disabling separators at the library-level can be seen here
 
 ```yaml
 libraries:
@@ -86,23 +92,36 @@ Multiple styles are available for Separators, to match Plex's "categories" featu
 
 The available styles available are:
 
-| Style    | Value    |
-|:---------|:---------|
-| Original | `orig`   |  
-| Blue     | `blue`   |  
-| Brown    | `stb`    |   
-| Gray     | `gray`   |  
-| Green    | `green`  | 
-| Purple   | `purple` |
-| Red      | `red`    |   
+| Style    | Value      |
+|:---------|:-----------|
+| Original | `orig`     |  
+| Amethyst | `amethyst` |  
+| Aqua     | `aqua`     |   
+| Blue     | `blue`     |  
+| Forest   | `green`    | 
+| Fuchsia  | `fuchsia`  |
+| Gold     | `gold`     |   
+| Gray     | `gray`     |  
+| Green    | `green`    |   
+| Navy     | `navy`     |  
+| Ocean    | `ocean`    | 
+| Olive    | `olive`    |
+| Orchid   | `orchid`   |   
+| Pink     | `pink`     |  
+| Plum     | `plum`     |   
+| Purple   | `purple`   |  
+| Red      | `red`      | 
+| Rust     | `rust`     |
+| Salmon   | `salmon`   |   
+| Sand     | `sand`     |  
+| Brown    | `stb`      |   
+| Tan      | `tan`      |  
 
 This image shows an example separator in each of the above styles
 
 ![](images/separators2.jpg)
 
-The style of separator can be defined per-file and per-library.
-
-An example of disabling separators at the library-level cam be seen here
+An example of changing the separator style at the library-level can be seen here
 
 ```yaml
 libraries:

@@ -10,21 +10,28 @@ Supported Library Types: Movie
 
 ## Collections Section 000
 
-| Collection                   | Key            | Description                                                                 |
-|:-----------------------------|:---------------|:----------------------------------------------------------------------------|
-| `Seasonal Collections`       | `separator`    | [Separator Collection](../separators) to denote the Section of Collections. |
-| `🎊 New Year's Day Movies`   | `years`        | Collection of Movies related to New Year's Day.                             |
-| `💘 Valentine's Day Movies`  | `valentine`    | Collection of Movies related to Valentine's Day.                            |
-| `☘ St. Patrick's Day Movies` | `patrick`      | Collection of Movies related to St. Patrick's Day.                          |
-| `🐰 Easter Movies`           | `easter`       | Collection of Movies related to Easter.                                     |
-| `🤱 Mother's Day Movies`     | `mother`       | Collection of Movies related to Mother's Day.                               |
-| `🪖 Memorial Day Movies`     | `memorial`     | Collection of Movies related to Memorial Day.                               |
-| `👨 Father's Day Movies`     | `father`       | Collection of Movies related to Father's Day.                               |
-| `🎆 Independence Day Movies` | `independence` | Collection of Movies related to Independence Day.                           |
-| `⚒ Labor Day Movies`         | `labor`        | Collection of Movies related to Labor Day.                                  |
-| `🎃 Halloween Movies`        | `halloween`    | Collection of Movies related to Halloween.                                  |
-| `🦃 Thanksgiving Movies`     | `thanksgiving` | Collection of Movies related to Thanksgiving.                               |
-| `🎅 Christmas Movies`        | `christmas`    | Collection of Movies related to Christmas.                                  |
+| Collection                                         | Key                | Description                                                                  |
+|:---------------------------------------------------|:-------------------|:-----------------------------------------------------------------------------|
+| `Seasonal Collections`                             | `separator`        | [Separator Collection](../separators) to denote the Section of Collections.  |
+| `🎊 New Year's Day Movies`                         | `years`            | Collection of Movies related to New Year's Day.                              |
+| `💘 Valentine's Day Movies`                        | `valentine`        | Collection of Movies related to Valentine's Day.                             |
+| `☘ St. Patrick's Day Movies`                       | `patrick`          | Collection of Movies related to St. Patrick's Day.                           |
+| `🐰 Easter Movies`                                 | `easter`           | Collection of Movies related to Easter.                                      |
+| `🤱 Mother's Day Movies`                           | `mother`           | Collection of Movies related to Mother's Day.                                |
+| `🪖 Memorial Day Movies`                           | `memorial`         | Collection of Movies related to Memorial Day.                                |
+| `👨 Father's Day Movies`                           | `father`           | Collection of Movies related to Father's Day.                                |
+| `🎆 Independence Day Movies`                       | `independence`     | Collection of Movies related to Independence Day.                            |
+| `⚒ Labor Day Movies`                               | `labor`            | Collection of Movies related to Labor Day.                                   |
+| `🎃 Halloween Movies`                              | `halloween`        | Collection of Movies related to Halloween.                                   |
+| `🎖 Veteran's Day Movies`                          | `veteran`          | Collection of Movies related to Veteran's Day.                               |
+| `🦃 Thanksgiving Movies`                           | `thanksgiving`     | Collection of Movies related to Thanksgiving.                                |
+| `🎅 Christmas Movies`                              | `christmas`        | Collection of Movies related to Christmas.                                   |
+| `🌊🌺 Asian American Pacific Islander Movies`      | `aapi`             | Collection of Movies related to Asian American Pacific Islander Month        |
+| `♿ Disability Month Movies`                        | `disabilities`     | Collection of Movies related to Disability Month                             |
+| `✊ 🏿 Black History Month Movies`                  | `black_history`    | Collection of Movies related to Black History Month                         | 
+| `🏳️‍🌈 LGBTQ Month Movies`                        | `lgbtq`            | Collection of Movies related to LGBTQ Month                                  | 
+| `🪅 National Hispanic Heritage Movies`             | `latinx`           | Collection of Movies related to National Hispanic Heritage Month             |
+| `🚺 Women's History Month Movies`                  | `women`            | Collection of Movies related to Women's History Month                        |
 
 ## Config
 
@@ -89,7 +96,7 @@ libraries:
           append_data:
             veteran: Veteran's Day
           schedule_veteran: range(11/01-11/30)
-          imdb_list_veteran: https://www.imdb.com/list/ls002014923/
+          imdb_list_veteran: https://www.imdb.com/list/ls565595526/
           emoji_veteran: "🪖 "
 ```
 
@@ -111,8 +118,15 @@ data:
   independence: Independence Day
   labor: Labor Day
   halloween: Halloween
+  veteran: Veteran's Day
   thanksgiving: Thanksgiving
   christmas: Christmas
+  aapi: Asian American & Pacific Islander Heritage Month
+  disabilities: Day of Persons with Disabilities
+  black_history: Black History Month
+  lgbtq: LGBTQ+ Pride Month
+  latinx: Latinx Heritage Month
+  women: Women's History Month
 ```
 
 ### Default `tmdb_collection`
@@ -154,7 +168,7 @@ imdb_list:
     - https://www.imdb.com/list/ls062665509/
     - https://www.imdb.com/list/ls051733651/
   mother: https://www.imdb.com/list/ls072551197/
-  memorial: https://www.imdb.com/list/ls002014923/
+  memorial: https://www.imdb.com/list/ls561621160/
   father: https://www.imdb.com/list/ls020471057/
   independence:
     - https://www.imdb.com/list/ls068664510/
@@ -163,10 +177,39 @@ imdb_list:
   halloween:
     - https://www.imdb.com/list/ls023118929/
     - https://www.imdb.com/list/ls000099714/
+  veteran:
+    - https://www.imdb.com/list/ls565595526/
   thanksgiving:
     - https://www.imdb.com/list/ls000835734/
     - https://www.imdb.com/list/ls091597850/
   christmas: https://www.imdb.com/list/ls000096828/
+  women:
+    - https://www.imdb.com/search/keyword/?keywords=women-in-film&ref_=fn_kw_kw_9
+    - https://www.imdb.com/search/keyword/?keywords=women%27s-rights&ref_=fn_kw_kw_2
+    - https://www.imdb.com/search/keyword/?keywords=women%27s-suffrage&ref_=fn_kw_kw_13
+```
+
+### Default `mdblist`
+
+```yaml
+mdblist_list:
+  aapi:
+    - https://mdblist.com/lists/plexmetamanager/asian-american-pacific-islander-heritage-month
+  disabilities:
+    - https://mdblist.com/lists/plexmetamanager/day-of-persons-with-disabilities
+  lgbtq:
+    - https://mdblist.com/lists/plexmetamanager/lgbtq-pride-month
+  latinx:
+    - https://mdblist.com/lists/plexmetamanager/latinx-heritage-month
+```
+
+### Default `track_list`
+
+```yaml
+trakt_list:
+  black_history:
+    - https://trakt.tv/users/hoochzilla/lists/black-cinema?display=movie&sort=title,asc
+    - https://trakt.tv/users/bluephi8/lists/black-history?display=movie&sort=title,asc
 ```
 
 ### Default `schedule`
@@ -183,6 +226,13 @@ schedule:
   independence: range(06/23-07/11)
   labor: range(09/01-09/10)
   halloween: range(10/01-10/31)
+  veteran: range(11/01-11/30)
   thanksgiving: range(11/01-11/30)
   christmas: range(12/01-12/31)
+  aapi: range(04/30-05/31)
+  disabilities: range(12/02-12/04)
+  black_history: range(02/01-03/01)
+  lgbtq: range(05/31-06/30)
+  latinx: range(09/15-10/15)
+  women: range(02/28-03/31)
 ```

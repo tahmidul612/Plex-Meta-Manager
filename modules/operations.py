@@ -187,10 +187,10 @@ class Operations:
                         if item.ratingKey in reverse_mal:
                             mal_id = reverse_mal[item.ratingKey]
                         elif not anidb_id:
-                            logger.warning(f"Covert Warning: No AniDB ID to Convert to MyAnimeList ID for Guid: {item.guid}")
+                            logger.warning(f"Convert Warning: No AniDB ID to Convert to MyAnimeList ID for Guid: {item.guid}")
                             mal_id = None
                         elif anidb_id not in self.config.Convert._anidb_to_mal:
-                            logger.warning(f"Covert Warning: No MyAnimeList Found for AniDB ID: {anidb_id} of Guid: {item.guid}")
+                            logger.warning(f"Convert Warning: No MyAnimeList Found for AniDB ID: {anidb_id} of Guid: {item.guid}")
                             mal_id = None
                         else:
                             mal_id = self.config.Convert._anidb_to_mal[anidb_id]
@@ -512,11 +512,16 @@ class Operations:
                         new_poster = None
                         new_background = None
                     if self.library.mass_poster_update:
-                        self.library.poster_update(item, new_poster, tmdb=tmdb_item.poster_url if tmdb_item else None)
+                        self.library.poster_update(item, new_poster, tmdb=tmdb_item.poster_url if tmdb_item else None, title=item.title)
                     if self.library.mass_background_update:
-                        self.library.background_update(item, new_background, tmdb=tmdb_item.backdrop_url if tmdb_item else None)
+                        self.library.background_update(item, new_background, tmdb=tmdb_item.backdrop_url if tmdb_item else None, title=item.title)
 
-                    if self.library.is_show:
+                    if self.library.is_show and (
+                            (self.library.mass_poster_update and
+                                (self.library.mass_poster_update["seasons"] or self.library.mass_poster_update["episodes"])) or
+                            (self.library.mass_background_update and
+                                (self.library.mass_background_update["seasons"] or self.library.mass_background_update["episodes"]))
+                    ):
                         real_show = None
                         try:
                             real_show = tmdb_item.load_show() if tmdb_item else None
@@ -524,37 +529,43 @@ class Operations:
                             logger.error(e)
                         tmdb_seasons = {s.season_number: s for s in real_show.seasons} if real_show else {}
                         for season in self.library.query(item.seasons):
-                            try:
-                                season_poster, season_background, _, _ = self.library.find_item_assets(season, item_asset_directory=item_dir, folder_name=name)
-                            except Failed:
-                                season_poster = None
-                                season_background = None
-                            tmdb_poster = tmdb_seasons[season.seasonNumber].poster_url if season.seasonNumber in tmdb_seasons else None
-                            if self.library.mass_poster_update:
-                                self.library.poster_update(season, season_poster, tmdb=tmdb_poster, title=season.title if season else None)
-                            if self.library.mass_background_update:
-                                self.library.background_update(season, season_background, title=season.title if season else None)
-
-                            tmdb_episodes = {}
-                            if season.seasonNumber in tmdb_seasons:
-                                for episode in tmdb_seasons[season.seasonNumber].episodes:
-                                    episode._partial = False
-                                    try:
-                                        tmdb_episodes[episode.episode_number] = episode
-                                    except NotFound:
-                                        logger.error(f"TMDb Error: An Episode of Season {season.seasonNumber} was Not Found")
-
-                            for episode in self.library.query(season.episodes):
+                            if (self.library.mass_poster_update and self.library.mass_poster_update["seasons"]) or \
+                                    (self.library.mass_background_update and self.library.mass_background_update["seasons"]):
                                 try:
-                                    episode_poster, episode_background, _, _ = self.library.find_item_assets(episode, item_asset_directory=item_dir, folder_name=name)
+                                    season_poster, season_background, _, _ = self.library.find_item_assets(season, item_asset_directory=item_dir, folder_name=name)
                                 except Failed:
-                                    episode_poster = None
-                                    episode_background = None
-                                tmdb_poster = tmdb_episodes[episode.episodeNumber].still_url if episode.episodeNumber in tmdb_episodes else None
+                                    season_poster = None
+                                    season_background = None
+                                season_title = f"S{season.seasonNumber} {season.title}"
+                                tmdb_poster = tmdb_seasons[season.seasonNumber].poster_url if season.seasonNumber in tmdb_seasons else None
                                 if self.library.mass_poster_update:
-                                    self.library.poster_update(episode, episode_poster, tmdb=tmdb_poster, title=episode.title if episode else None)
+                                    self.library.poster_update(season, season_poster, tmdb=tmdb_poster, title=season_title if season else None)
                                 if self.library.mass_background_update:
-                                    self.library.background_update(episode, episode_background, title=episode.title if episode else None)
+                                    self.library.background_update(season, season_background, title=season_title if season else None)
+
+                            if (self.library.mass_poster_update and self.library.mass_poster_update["episodes"]) or \
+                                    (self.library.mass_background_update and self.library.mass_background_update["episodes"]):
+                                tmdb_episodes = {}
+                                if season.seasonNumber in tmdb_seasons:
+                                    for episode in tmdb_seasons[season.seasonNumber].episodes:
+                                        episode._partial = False
+                                        try:
+                                            tmdb_episodes[episode.episode_number] = episode
+                                        except NotFound:
+                                            logger.error(f"TMDb Error: An Episode of Season {season.seasonNumber} was Not Found")
+
+                                for episode in self.library.query(season.episodes):
+                                    try:
+                                        episode_poster, episode_background, _, _ = self.library.find_item_assets(episode, item_asset_directory=item_dir, folder_name=name)
+                                    except Failed:
+                                        episode_poster = None
+                                        episode_background = None
+                                    episode_title = f"S{season.seasonNumber}E{episode.episodeNumber} {episode.title}"
+                                    tmdb_poster = tmdb_episodes[episode.episodeNumber].still_url if episode.episodeNumber in tmdb_episodes else None
+                                    if self.library.mass_poster_update:
+                                        self.library.poster_update(episode, episode_poster, tmdb=tmdb_poster, title=episode_title if episode else None)
+                                    if self.library.mass_background_update:
+                                        self.library.background_update(episode, episode_background, title=episode_title if episode else None)
 
                 episode_ops = [
                     self.library.mass_episode_audience_rating_update, self.library.mass_episode_critic_rating_update,

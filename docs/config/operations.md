@@ -187,6 +187,8 @@ Updates every item's originally available date in the library to the chosen site
 
 Updates every item's audience/critic/user rating in the library to the chosen site's rating.
 
+IMPORTANT NOTE: This does not affect the icons displayed in the Plex UI.  This will place the number of your choice in the relevant field in the Plex database.  In other words, if Plex is configured to use Rotten Tomatoes ratings, then no matter what happens with this mass rating update operation, the icons in the Plex UI will remain Rotten Tomatoes.  The human who decided to put TMDB ratings in the critic slot and Letterboxd ratings in the audience slot is the only party who knows that the ratings are no longer Rotten Tomatoes.  One primary use of this feature is to put ratings overlays on posters.  More information on what PMM can do with these ratings can be found [here](../home/guides/ratings).
+
 **Attribute:** `mass_audience_rating_update`/`mass_critic_rating_update`/`mass_user_rating_update`
 
 **Values:**
@@ -238,16 +240,29 @@ Updates every item's episode's audience/critic/user rating in the library to the
 
 Updates every item's poster to the chosen sites poster. Will fallback to `plex` if the given option fails. Assets will be used over anything else.
 
+IMPORTANT NOTE: This does not affect the icons displayed in the Plex UI.  This will place the number of your choice in the relevant field in the Plex database.  In other words, if Plex is configured to use Rotten Tomatoes ratings, then no matter what happens with this mass rating update operation, the icons in the Plex UI will remain Rotten Tomatoes.  The human who decided to put TMDB ratings in the critic slot and Letterboxd ratings in the audience slot is the only party who knows that the ratings are no longer Rotten Tomatoes.  One primary use of this feature is to put ratings overlays on posters.  More information on what PMM can do with these ratings can be found [here](../home/guides/ratings).
+
 **Attribute:** `mass_poster_update`
 
-**Values:**
+**Values:** There are a few different options to determine how the `mass_poster_update` works.
 
-| Value    | Description     |
-|:---------|:----------------|
-| `tmdb`   | Use TMDb Poster |
-| `plex`   | Use Plex Poster |
-| `lock`   | Lock Poster     |
-| `unlock` | Unlock Poster   |
+| Attribute           | Description                                                                                         |
+|:--------------------|:----------------------------------------------------------------------------------------------------|
+| `source`            | Source of the poster update<br>**Values:** `tmdb`, `plex`, `lock`, or `unlock`                      |
+| `seasons`           | Update season posters while updating shows<br>**Default:** `true`<br>**Values:** `true` or `false`  |
+| `episodes`          | Update episode posters while updating shows<br>**Default:** `true`<br>**Values:** `true` or `false` |
+
+**Example:**
+
+```yaml
+library:
+  TV Shows:
+    operations:
+      mass_poster_update:
+        source: tmdb
+        seasons: false
+        episodes: false
+```
 
 ## Mass Background Update
 
@@ -255,14 +270,25 @@ Updates every item's background to the chosen sites background. Will fallback to
 
 **Attribute:** `mass_background_update`
 
-**Values:**
+**Values:** There are a few different options to determine how the `mass_background_update` works.
 
-| Value    | Description         |
-|:---------|:--------------------|
-| `tmdb`   | Use TMDb Background |
-| `plex`   | Use Plex Background |
-| `lock`   | Lock Background     |
-| `unlock` | Unlock Background   |
+| Attribute           | Description                                                                                             |
+|:--------------------|:--------------------------------------------------------------------------------------------------------|
+| `source`            | Source of the background update<br>**Values:** `tmdb`, `plex`, `lock`, or `unlock`                      |
+| `seasons`           | Update season backgrounds while updating shows<br>**Default:** `true`<br>**Values:** `true` or `false`  |
+| `episodes`          | Update episode backgrounds while updating shows<br>**Default:** `true`<br>**Values:** `true` or `false` |
+
+**Example:**
+
+```yaml
+library:
+  TV Shows:
+    operations:
+      mass_background_update:
+        source: tmdb
+        seasons: false
+        episodes: false
+```
 
 ## Mass IMDb Parental Labels
 
