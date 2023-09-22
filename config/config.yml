@@ -1,62 +1,68 @@
 libraries:
   Movies:
     overlay_path:
-    - remove_overlays: false
-    - pmm: resolution
-    - pmm: video_format
-      template_variables:
-        horizontal_align: center
-        vertical_align: top
+      - remove_overlays: false
+      - pmm: resolution
+      - pmm: video_format
+        template_variables:
+          horizontal_align: center
+          vertical_align: top
+    operations:
+      assets_for_all: true
   Shows:
     overlay_path:
-    - remove_overlays: false
-    - pmm: video_format
-      template_variables:
-        overlay_level: season
-        horizontal_align: center
-        vertical_align: top
-    - pmm: resolution
-    - pmm: resolution
-      template_variables:
-        overlay_level: season
-    - pmm: resolution
-      template_variables:
-        overlay_level: episode
-    - pmm: video_format
-      template_variables:
-        overlay_level: episode
-    - pmm: episode_info
-      template_variables:
-        overlay_level: episode
-        vertical_offset: 30
+      - remove_overlays: false
+      - pmm: video_format
+        template_variables:
+          overlay_level: season
+          horizontal_align: center
+          vertical_align: top
+      - pmm: resolution
+      - pmm: resolution
+        template_variables:
+          overlay_level: season
+      - pmm: resolution
+        template_variables:
+          overlay_level: episode
+      - pmm: video_format
+        template_variables:
+          overlay_level: episode
+      - pmm: episode_info
+        template_variables:
+          overlay_level: episode
+          vertical_offset: 30
+    operations:
+      assets_for_all: true
   Anime:
     overlay_path:
-    - remove_overlays: false
-    - pmm: video_format
-      template_variables:
-        overlay_level: season
-        horizontal_align: center
-        vertical_align: top
-    - pmm: resolution
-    - pmm: resolution
-      template_variables:
-        overlay_level: season
-    - pmm: resolution
-      template_variables:
-        overlay_level: episode
-    - pmm: video_format
-      template_variables:
-        overlay_level: episode
-    - pmm: episode_info
-      template_variables:
-        overlay_level: episode
-        vertical_offset: 30
+      - remove_overlays: false
+      - pmm: video_format
+        template_variables:
+          overlay_level: season
+          horizontal_align: center
+          vertical_align: top
+      - pmm: resolution
+      - pmm: resolution
+        template_variables:
+          overlay_level: season
+      - pmm: resolution
+        template_variables:
+          overlay_level: episode
+      - pmm: video_format
+        template_variables:
+          overlay_level: episode
+      - pmm: episode_info
+        template_variables:
+          overlay_level: episode
+          vertical_offset: 30
+    operations:
+      assets_for_all: true
 settings:
   cache: true
   cache_expiration: 60
   asset_directory: /data/Posters
   asset_folders: true
-  asset_depth: 1
+  asset_depth: 2
   create_asset_folders: false
   prioritize_assets: true
   dimensional_asset_rename: false
@@ -66,7 +72,7 @@ settings:
   show_asset_not_needed: false
   sync_mode: append
   minimum_items: 1
-  default_collection_order:
+  default_collection_order: release
   delete_below_minimum: true
   delete_not_scheduled: false
   run_again_delay: 2
@@ -74,8 +80,8 @@ settings:
   only_filter_missing: false
   show_unmanaged: true
   show_unconfigured: true
-  show_filtered: false
-  show_options: false
+  show_filtered: true
+  show_options: true
   show_missing: false
   show_missing_assets: true
   save_report: false
@@ -89,21 +95,21 @@ settings:
   verify_ssl: true
   custom_repo:
   check_nightly: false
-webhooks:                        # Can be individually specified per library as well
+  webhooks: # Can be individually specified per library as well
   error:
   version:
   run_start:
   run_end:
   changes:
   delete:
-plex:                            # Can be individually specified per library as well; REQUIRED for the script to run
-  url: http://localhost:32400
-  token: Pa9XwQH9_sQCxLzMfRSn
+plex: # Can be individually specified per library as well; REQUIRED for the script to run
+  url: http://127.0.0.1:32400
+  token: xUfLv_78reC19knbqNPm
   timeout: 60
   clean_bundles: false
   empty_trash: false
   optimize: false
-tmdb:                            # REQUIRED for the script to run
+tmdb: # REQUIRED for the script to run
   apikey: 50b87e910c68390b41b972ad3b174917
   language: en
   cache_expiration: 60
