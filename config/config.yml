@@ -1,5 +1,7 @@
 libraries:
   Movies:
+    operations:
+      assets_for_all: true
     overlay_path:
       - remove_overlays: false
       - pmm: resolution
@@ -7,9 +9,10 @@ libraries:
         template_variables:
           horizontal_align: center
           vertical_align: top
-    operations:
-      assets_for_all: true
+      - pmm: versions
   Shows:
+    operations:
+      assets_for_all: true
     overlay_path:
       - remove_overlays: false
       - pmm: video_format
@@ -31,9 +34,14 @@ libraries:
         template_variables:
           overlay_level: episode
           vertical_offset: 30
-    operations:
-      assets_for_all: true
+      - pmm: versions
+        template_variables:
+          builder_level: episode
   Anime:
+    operations:
+      assets_for_all: true
+    metadata_path:
+      - file: config/custom/Monogatari.yml
     overlay_path:
       - remove_overlays: false
       - pmm: video_format
@@ -55,8 +63,9 @@ libraries:
         template_variables:
           overlay_level: episode
           vertical_offset: 30
-    operations:
-      assets_for_all: true
+      - pmm: versions
+        template_variables:
+          builder_level: episode
 settings:
   cache: true
   cache_expiration: 60
@@ -109,6 +118,7 @@ plex: # Can be individually specified per library as well; REQUIRED for the scri
   clean_bundles: false
   empty_trash: false
   optimize: false
+  db_cache:
 tmdb: # REQUIRED for the script to run
   apikey: 50b87e910c68390b41b972ad3b174917
   language: en
